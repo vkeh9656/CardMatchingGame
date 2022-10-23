@@ -10,8 +10,11 @@ class CCardMatchingGameDlg : public CDialogEx
 {
 private:
 	CImage m_card_image[19]; // 0 -> 뒷면, 1 ~ 18 -> 카드사진
+
 	char m_view_flag = 1;
 	char m_table[36]; // 1차원 배열로 카드판 관리
+	char m_first_pos = -1; // -1 -> 선택안함, 0 ~ 35 -> 선택한 카드 index
+
 // 생성입니다.
 public:
 	CCardMatchingGameDlg(CWnd* pParent = nullptr);	// 표준 생성자입니다.

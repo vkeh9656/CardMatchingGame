@@ -108,11 +108,12 @@ void CCardMatchingGameDlg::OnPaint()
 		int card_index =0;
 		for (int i = 0; i < 36; i++)
 		{
+			if (m_table[i] == 0) continue; // 카드 제거 !
+ 
 			if (m_view_flag)
 			{
 				card_index = m_table[i];
 			}
-				
 
 			m_card_image[card_index].Draw(dc, (i % 6) * 36, (i / 6) * 56);
 
@@ -143,6 +144,11 @@ void CCardMatchingGameDlg::OnTimer(UINT_PTR nIDEvent)
 		m_view_flag = 0;
 		Invalidate(); // WM_PAINT 메시지 발생 -> OnPaint()
 	}
+	else if (nIDEvent == 2)
+	{
+		KillTimer(2);
+		Invalidate();
+	}
 
 	CDialogEx::OnTimer(nIDEvent);
 }
@@ -150,7 +156,38 @@ void CCardMatchingGameDlg::OnTimer(UINT_PTR nIDEvent)
 
 void CCardMatchingGameDlg::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+	if (m_view_flag == 1) return;
+
+	
+	int x = point.x / 36;
+	int y = point.y / 56;
+
+	if (x < 6 && y < 6)
+	{
+		int select_pos = y * 6 + x;
+
+		if (m_first_pos == -1)
+		{
+			m_first_pos = select_pos; // 첫번째 카드 선택
+		}
+		else
+		{
+			if (m_table[m_first_pos] == m_table[select_pos])
+			{
+				m_table[m_first_pos] = m_table[select_pos] = 0;
+				Invalidate();
+			}
+			else
+			{
+				SetTimer(2, 1000, NULL);
+				Invalidate();
+			}
+		}
+
+		CClientDC dc(this);
+		int card_index = m_table[select_pos];
+		m_card_image[card_index].Draw(dc, x * 36, y * 56);
+	}
 
 	CDialogEx::OnLButtonDown(nFlags, point);
 }
