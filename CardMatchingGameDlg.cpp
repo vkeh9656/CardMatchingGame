@@ -110,19 +110,13 @@ void CCardMatchingGameDlg::OnPaint()
 		{
 			if (m_table[i] == 0) continue; // 카드 제거 !
  
-			if (m_view_flag)
-			{
-				card_index = m_table[i];
-			}
-
+			if (m_view_flag == 1) card_index = m_table[i];
+			
 			m_card_image[card_index].Draw(dc, (i % 6) * 36, (i / 6) * 56);
 
 			str.Format(L"%d", m_table[i]);
 			dc.TextOutW(5+(i % 6) * 36, 5+(i / 6) * 56, str);
 		}
-		
-		
-
 		//CDialogEx::OnPaint();
 	}
 }
@@ -147,16 +141,19 @@ void CCardMatchingGameDlg::OnTimer(UINT_PTR nIDEvent)
 	else if (nIDEvent == 2)
 	{
 		KillTimer(2);
-		Invalidate();
+		m_view_flag = 0;
+		Invalidate();	
 	}
-
-	CDialogEx::OnTimer(nIDEvent);
+	else
+	{
+		CDialogEx::OnTimer(nIDEvent);
+	}
 }
 
 
 void CCardMatchingGameDlg::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	if (m_view_flag == 1) return;
+	if (m_view_flag != 0) return; // 카드가 다 열려있을땐 못누르게 세팅
 
 	
 	int x = point.x / 36;
@@ -165,6 +162,7 @@ void CCardMatchingGameDlg::OnLButtonDown(UINT nFlags, CPoint point)
 	if (x < 6 && y < 6)
 	{
 		int select_pos = y * 6 + x;
+		if (m_table[select_pos] == 0) return; // 이미 제거된 카드는 클릭해도 상관없도록 return
 
 		if (m_first_pos == -1)
 		{
@@ -172,16 +170,25 @@ void CCardMatchingGameDlg::OnLButtonDown(UINT nFlags, CPoint point)
 		}
 		else
 		{
-			if (m_table[m_first_pos] == m_table[select_pos])
+			if (m_first_pos == select_pos) return;	// 같은 위치의 카드를 선택할 경우 return
+
+			if (m_table[m_first_pos] == m_table[select_pos]) // 처음 선택한 카드와 두번째 선택한 카드가 같다면?
 			{
 				m_table[m_first_pos] = m_table[select_pos] = 0;
 				Invalidate();
+				m_find_count++;
+				if (m_find_count == 18)
+				{
+					// 게임 종료 !
+				}
 			}
 			else
 			{
+				m_view_flag = 2;
 				SetTimer(2, 1000, NULL);
-				Invalidate();
 			}
+
+			m_first_pos = -1; // 다시 선택하지 않은것으로 롤백
 		}
 
 		CClientDC dc(this);

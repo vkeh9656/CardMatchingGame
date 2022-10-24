@@ -15,6 +15,8 @@ private:
 	char m_table[36]; // 1차원 배열로 카드판 관리
 	char m_first_pos = -1; // -1 -> 선택안함, 0 ~ 35 -> 선택한 카드 index
 
+	char m_find_count = 0;
+
 // 생성입니다.
 public:
 	CCardMatchingGameDlg(CWnd* pParent = nullptr);	// 표준 생성자입니다.
