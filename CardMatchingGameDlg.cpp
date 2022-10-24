@@ -26,6 +26,7 @@ CCardMatchingGameDlg::CCardMatchingGameDlg(CWnd* pParent /*=nullptr*/)
 void CCardMatchingGameDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_TIME_PROGRESS, m_time_progress);
 }
 
 BEGIN_MESSAGE_MAP(CCardMatchingGameDlg, CDialogEx)
@@ -33,6 +34,7 @@ BEGIN_MESSAGE_MAP(CCardMatchingGameDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_WM_TIMER()
 	ON_WM_LBUTTONDOWN()
+	ON_BN_CLICKED(IDC_HINT_BTN, &CCardMatchingGameDlg::OnBnClickedHintBtn)
 END_MESSAGE_MAP()
 
 
@@ -53,6 +55,21 @@ BOOL CCardMatchingGameDlg::OnInitDialog()
 		str.Format(L".\\card_image\\%03d.bmp", i);
 		m_card_image[i].Load(str);
 	}
+	srand((unsigned int)time(NULL)); // 난수 시드 설정
+	m_time_progress.SetRange(0, 60);
+	StartGame();
+
+	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
+}
+
+// 대화 상자에 최소화 단추를 추가할 경우 아이콘을 그리려면
+//  아래 코드가 필요합니다.  문서/뷰 모델을 사용하는 MFC 애플리케이션의 경우에는
+//  프레임워크에서 이 작업을 자동으로 수행합니다.
+
+void CCardMatchingGameDlg::StartGame()
+{
+	SetDlgItemInt(IDC_HINT_BTN, 3);
+	m_view_flag = 1;
 
 	for (int i = 0; i < 18; i++)
 	{
@@ -60,7 +77,7 @@ BOOL CCardMatchingGameDlg::OnInitDialog()
 		m_table[18 + i] = i + 1;	// 1 ~ 18, m_table[18] ~ m_table[35]
 	}
 
-	srand((unsigned int)time(NULL)); // 난수 시드 설정
+	
 	int first, second, temp;
 	for (int i = 0; i < 100; i++)
 	{
@@ -75,14 +92,11 @@ BOOL CCardMatchingGameDlg::OnInitDialog()
 		}
 	}
 
+	m_time_progress.SetPos(60);
+
 	SetTimer(1, 3000, NULL); // NULL을 쓰면 WM_TIMER 메시지를 쓰겠다는 뜻
-
-	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
+	SetTimer(10, 1000, NULL);
 }
-
-// 대화 상자에 최소화 단추를 추가할 경우 아이콘을 그리려면
-//  아래 코드가 필요합니다.  문서/뷰 모델을 사용하는 MFC 애플리케이션의 경우에는
-//  프레임워크에서 이 작업을 자동으로 수행합니다.
 
 void CCardMatchingGameDlg::OnPaint()
 {
@@ -114,8 +128,12 @@ void CCardMatchingGameDlg::OnPaint()
 			
 			m_card_image[card_index].Draw(dc, (i % 6) * 36, (i / 6) * 56);
 
-			str.Format(L"%d", m_table[i]);
-			dc.TextOutW(5+(i % 6) * 36, 5+(i / 6) * 56, str);
+			if (m_view_flag == 1)
+			{
+				str.Format(L"%d", m_table[i]);
+				dc.TextOutW(5 + (i % 6) * 36, 5 + (i / 6) * 56, str);
+			}
+			
 		}
 		//CDialogEx::OnPaint();
 	}
@@ -128,6 +146,20 @@ HCURSOR CCardMatchingGameDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+void CCardMatchingGameDlg::EndOfGame(const wchar_t* ap_ment)
+{
+	KillTimer(10);
+	
+	if (IDOK == MessageBox(L"다시 게임을 하시겠습니까?", ap_ment, MB_OKCANCEL | MB_ICONQUESTION))
+	{
+		StartGame();
+		Invalidate();
+	}
+	else
+	{
+		EndDialog(IDOK); // 프로그램 종료
+	}
+}
 
 
 void CCardMatchingGameDlg::OnTimer(UINT_PTR nIDEvent)
@@ -143,6 +175,15 @@ void CCardMatchingGameDlg::OnTimer(UINT_PTR nIDEvent)
 		KillTimer(2);
 		m_view_flag = 0;
 		Invalidate();	
+	}
+	else if (nIDEvent == 10)
+	{
+		int num = m_time_progress.GetPos() - 1;
+		if (num > 0) m_time_progress.SetPos(num);
+		else {
+			// 게임 종료 (패배)
+			EndOfGame(L"졌지만 잘싸웠어..");
+		}
 	}
 	else
 	{
@@ -179,7 +220,8 @@ void CCardMatchingGameDlg::OnLButtonDown(UINT nFlags, CPoint point)
 				m_find_count++;
 				if (m_find_count == 18)
 				{
-					// 게임 종료 !
+					// 게임 종료 (승리)
+					EndOfGame(L"WINNER WINNER CHICKEN DINNER!");
 				}
 			}
 			else
@@ -197,4 +239,18 @@ void CCardMatchingGameDlg::OnLButtonDown(UINT nFlags, CPoint point)
 	}
 
 	CDialogEx::OnLButtonDown(nFlags, point);
+}
+
+
+void CCardMatchingGameDlg::OnBnClickedHintBtn()
+{
+	int num = GetDlgItemInt(IDC_HINT_BTN);
+	if (num > 0)
+	{
+		SetDlgItemInt(IDC_HINT_BTN, num - 1);
+		m_view_flag = 1;
+		Invalidate();
+		
+		SetTimer(1, 3000, NULL);
+	}
 }

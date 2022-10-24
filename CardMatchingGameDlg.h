@@ -20,7 +20,8 @@ private:
 // 생성입니다.
 public:
 	CCardMatchingGameDlg(CWnd* pParent = nullptr);	// 표준 생성자입니다.
-
+	void EndOfGame(const wchar_t* ap_ment);
+	void StartGame();
 // 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_CARDMATCHINGGAME_DIALOG };
@@ -42,4 +43,6 @@ protected:
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnBnClickedHintBtn();
+	CProgressCtrl m_time_progress;
 };
